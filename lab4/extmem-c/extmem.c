@@ -7,12 +7,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "extmem.h"
 
 Buffer *initBuffer(size_t bufSize, size_t blkSize, Buffer *buf)
 {
-    int i;
-
     buf->numIO = 0;
     buf->bufSize = bufSize;
     buf->blkSize = blkSize;
@@ -30,6 +29,16 @@ Buffer *initBuffer(size_t bufSize, size_t blkSize, Buffer *buf)
     return buf;
 }
 
+Buffer *InitBuffer(size_t bufSize, size_t blkSize, Buffer *buf)
+{
+    if (!initBuffer(520, 64, buf))
+    {
+        perror("Buffer Initialization Failed!\n");
+        exit(-1);
+    }
+    return buf;
+}
+
 void freeBuffer(Buffer *buf)
 {
     free(buf->data);
@@ -42,7 +51,7 @@ unsigned char *getNewBlockInBuffer(Buffer *buf)
     if (buf->numFreeBlk == 0)
     {
         perror("Buffer is full!\n");
-        return NULL;
+        exit(-1);
     }
 
     blkPtr = buf->data;
@@ -58,6 +67,14 @@ unsigned char *getNewBlockInBuffer(Buffer *buf)
     *blkPtr = BLOCK_UNAVAILABLE;
     buf->numFreeBlk--;
     return blkPtr + 1;
+}
+
+unsigned char *GetNewBlockInBuffer(Buffer *buf)
+{
+    unsigned char *blkPtr;
+    blkPtr = getNewBlockInBuffer(buf);
+    memset(blkPtr, 0, 64);
+    return blkPtr;
 }
 
 void freeBlockInBuffer(unsigned char *blk, Buffer *buf)
@@ -90,7 +107,7 @@ unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
     if (buf->numFreeBlk == 0)
     {
         perror("Buffer Overflows!\n");
-        return NULL;
+        exit(-1);
     }
 
     blkPtr = buf->data;
@@ -108,8 +125,8 @@ unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
 
     if (!fp)
     {
-        perror("Reading Block Failed!\n");
-        return NULL;
+        perror("Reading Block Failed\n");
+        exit(-1);
     }
 
     *blkPtr = BLOCK_UNAVAILABLE;
@@ -129,6 +146,13 @@ unsigned char *readBlockFromDisk(unsigned int addr, Buffer *buf)
     return blkPtr;
 }
 
+unsigned char *ReadBlockFromDisk(unsigned int addr, Buffer *buf, int *IOtimes)
+{
+    printf("%s %u\n", READ_PREFIX, addr);
+    (*IOtimes)++;
+    return readBlockFromDisk(addr, buf);
+}
+
 int writeBlockToDisk(unsigned char *blkPtr, unsigned int addr, Buffer *buf)
 {
     char filename[40];
@@ -140,7 +164,7 @@ int writeBlockToDisk(unsigned char *blkPtr, unsigned int addr, Buffer *buf)
     if (!fp)
     {
         perror("Writing Block Failed!\n");
-        return -1;
+        exit(-1);
     }
 
     for (bytePtr = blkPtr; bytePtr < blkPtr + buf->blkSize; bytePtr++)
@@ -151,4 +175,11 @@ int writeBlockToDisk(unsigned char *blkPtr, unsigned int addr, Buffer *buf)
     buf->numFreeBlk++;
     buf->numIO++;
     return 0;
+}
+
+void WriteBlockToDisk(unsigned char *blkPtr, unsigned int addr, Buffer *buf, int *IOtimes)
+{
+    printf("%s %u\n", WRITE_PREFIX, addr);
+    (*IOtimes)++;
+    writeBlockToDisk(blkPtr, addr, buf);
 }
