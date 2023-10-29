@@ -7,11 +7,13 @@
 #define RBEGIN      1
 #define REND        16
 #define RSIZE       16
+#define RBUFFER     49
 
 // Data about relation S
 #define SBEGIN      17
 #define SEND        48
 #define SSIZE       32
+#define SBUFFER     65
 
 // Data about buffer block
 #define ATTRSIZE    4
@@ -31,13 +33,23 @@ int IOTimes = 0;
 
 // utils
 #define NEXT(p) ((char *)(p) + LINENUM * LINESIZE)
+#define SETNEXT(p, i) (sprintf(NEXT(p), "%d", (i)))
 #define LINE(p, i) ((char *)(p) + (i) * LINESIZE)
-#define ATTR(p, i) ((char *)(p) + (i) * ATTRSIZE)
+#define ATTR(p, i) (atoi(((char *)(p) + (i) * ATTRSIZE)))
+#define GROUP(p, off) ((p) + (off) * groupSize)
+#define BLOCK(p, off) ((p) + (off))
+#define BLOCKEND(p) (*(p) == '\0')
+// extmem
+#define GETBLOCK(p) ((p) = GetNewBlockInBuffer(&buf))
+#define READ(addr) (ReadBlockFromDisk((addr), &buf, &IOTimes))
+#define WRITE(blk, addr) (WriteBlockToDisk((blk), (addr), &buf, &IOTimes))
+#define FREE(blk) (freeBlockInBuffer((blk), &buf))
+// function tools
 int cmp(const void *a, const void *b);
 void mergeSort(int start, int nBlocks, int tmpStart);
 
 // task 1
-// Relation Selection Algorithm through linear search
+// Relation Selection Algorithm based on linear search
 void task1();
 
 // task 2
@@ -54,8 +66,8 @@ int main(int argc, char *argv[])
 
 int cmp(const void *a, const void *b)
 {
-    int a1 = atoi(ATTR(a, 0)), a2 = atoi(ATTR(a, 1));
-    int b1 = atoi(ATTR(b, 0)), b2 = atoi(ATTR(b, 1));
+    int a1 = ATTR(a, 0), a2 = ATTR(a, 1);
+    int b1 = ATTR(b, 0), b2 = ATTR(b, 1);
     return (a1 == b1) ? (a2 - b2) : (a1 - b1);
 }
 
@@ -72,14 +84,14 @@ void mergeSort(int start, int nBlocks, int tmpStart)
         for (int i = start; i < start + nBlocks; i += (BLOCKNUM - 1) * groupSize)
         {
             unsigned char *wBlk, *rBlk[BLOCKNUM - 1] = {};
-            int groupNum = 0, remain = 0, idx[BLOCKNUM - 1] = {}, cnt[BLOCKNUM - 1] = {}, writeNum = 0;
+            int groupNum = 0, remain = 0, idx[BLOCKNUM - 1] = {}, hasRead[BLOCKNUM - 1] = {}, writeNum = 0;
 
-            wBlk = GetNewBlockInBuffer(&buf);
+            GETBLOCK(wBlk);
             for (int j = 0; j < BLOCKNUM - 1; j++)
             {
-                if (i + j * groupSize >= start + nBlocks)
+                if (GROUP(i, j) >= BLOCK(start, nBlocks))
                     break;
-                rBlk[j] = ReadBlockFromDisk(i + j * groupSize, &buf, &IOTimes);
+                rBlk[j] = READ(GROUP(i, j));
                 groupNum++;
                 remain++;
             }
@@ -99,31 +111,31 @@ void mergeSort(int start, int nBlocks, int tmpStart)
                 memcpy(LINE(wBlk, writeNum++), LINE(rBlk[min], idx[min]++), LINESIZE);
                 if (writeNum == LINENUM)
                 {
-                    sprintf(NEXT(wBlk), "%d", tmpStart + writeTimes + 1);
-                    WriteBlockToDisk(wBlk, tmpStart + writeTimes++, &buf, &IOTimes);
-                    wBlk = GetNewBlockInBuffer(&buf);
+                    SETNEXT(wBlk, BLOCK(tmpStart, writeTimes + 1));
+                    WRITE(wBlk, BLOCK(tmpStart, writeTimes++));
+                    GETBLOCK(wBlk);
                     writeNum = 0;
                 }
-                if (idx[min] == LINENUM)
+                if (idx[min] == LINENUM || BLOCKEND(LINE(rBlk[min], idx[min])))
                 {
-                    freeBlockInBuffer(rBlk[min], &buf);
-                    cnt[min]++;
-                    if (cnt[min] == groupSize || i + min * groupSize + cnt[min] >= start + nBlocks)
+                    FREE(rBlk[min]);
+                    hasRead[min]++;
+                    if (hasRead[min] == groupSize || BLOCK(GROUP(i, min), hasRead[min]) >= BLOCK(start, nBlocks))
                     {
                         rBlk[min] = NULL;
                         remain--;
                     }
                     else
                     {
-                        rBlk[min] = ReadBlockFromDisk(i + min * groupSize + cnt[min], &buf, &IOTimes);
+                        rBlk[min] = READ(BLOCK(GROUP(i, min), hasRead[min]));
                         idx[min] = 0;
                     }
                 }
             }
             if (writeNum)
-                WriteBlockToDisk(wBlk, tmpStart + writeTimes++, &buf, &IOTimes);
+                WRITE(wBlk, BLOCK(tmpStart, writeTimes++));
             else
-                freeBlockInBuffer(wBlk, &buf);
+                FREE(wBlk);
         }
         int tmp = start;
         start = tmpStart;
@@ -135,8 +147,8 @@ void mergeSort(int start, int nBlocks, int tmpStart)
     {
         for (int i = start; i < start + nBlocks; i++)
         {
-            unsigned char *blk = ReadBlockFromDisk(i, &buf, &IOTimes);
-            WriteBlockToDisk(blk, originStart + i - start, &buf, &IOTimes);
+            unsigned char *blk = READ(i);
+            WRITE(blk, BLOCK(originStart, i - start));
         }
     }
 
@@ -157,36 +169,36 @@ void task1()
 
     for (int i = SBEGIN; i <= SEND; i++)
     {
-        rblk = ReadBlockFromDisk(i, &buf, &IOTimes);
+        rblk = READ(i);
         for (int j = 0; j < LINENUM; j++)
         {
-            if (*(rblk + j * LINESIZE) == '\0')
+            if (BLOCKEND(LINE(rblk, j)))
                 break;
 
-            int C = atoi(ATTR(LINE(rblk, j), 0));
-            int D = atoi(ATTR(LINE(rblk, j), 1));
+            int C = ATTR(LINE(rblk, j), 0);
+            int D = ATTR(LINE(rblk, j), 1);
 
             if (C == 107)
             {
                 printf("(C=%d, D=%d)\n", C, D);
                 if (!wblk)
-                    wblk = GetNewBlockInBuffer(&buf);
+                    GETBLOCK(wblk);
                 memcpy(LINE(wblk, writeNum++), LINE(rblk, j), LINESIZE);
             }
 
             if (writeNum == 7)
             {
-                sprintf(NEXT(wblk), "%d", OFFSET1 + writeTimes + 1);
-                WriteBlockToDisk(wblk, OFFSET1 + writeTimes++, &buf, &IOTimes);
+                sprintf(NEXT(wblk), "%d", BLOCK(OFFSET1, writeTimes + 1));
+                WRITE(wblk, BLOCK(OFFSET1, writeTimes++));
                 wblk = NULL;
                 writeNum = 0;
             }
         }
-        freeBlockInBuffer(rblk, &buf);
+        FREE(rblk);
     }
 
     if (wblk)
-        WriteBlockToDisk(wblk, OFFSET1 + writeTimes++, &buf, &IOTimes);
+        WRITE(wblk, BLOCK(OFFSET1, writeTimes++));
 
     printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
@@ -206,26 +218,26 @@ void task2()
     {
         unsigned char *blk;
 
-        blk = ReadBlockFromDisk(i, &buf, &IOTimes);
+        blk = READ(i);
 
         int nTuples = 0;
         for (int j = 0; j < LINENUM; j++)
         {
-            if (*(blk + j * LINESIZE) == '\0')
+            if (BLOCKEND(LINE(blk, j)))
                 break;
             nTuples++;
         }
         qsort(blk, nTuples, LINESIZE, cmp);
 
-        sprintf(NEXT(blk), "%d", OFFSETR2 + writeTimes + 1);
-        WriteBlockToDisk(blk, OFFSETR2 + writeTimes++, &buf, &IOTimes);
+        SETNEXT(blk, BLOCK(OFFSETR2, writeTimes + 1));
+        WRITE(blk, BLOCK(OFFSETR2, writeTimes++));
     }
 
     freeBuffer(&buf);
 
     // second pass, merge sort
-    mergeSort(OFFSETR2, RSIZE, SEND + 1);
-    mergeSort(OFFSETS2, SSIZE, SEND + 1 + RSIZE);
+    mergeSort(OFFSETR2, RSIZE, RBUFFER);
+    mergeSort(OFFSETS2, SSIZE, SBUFFER);
 
     printf("IO times: %d\n\n\n", IOTimes);
 }
