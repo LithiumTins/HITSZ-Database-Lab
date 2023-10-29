@@ -404,9 +404,9 @@ void task4()
     for (int i = SORTR; i < BLOCK(SORTR, RSIZE); i++)
     {
         rBlk = READ(i);
-        int nextR = 0, changeStart = 0;
         for (int y = 0; y < LINENUM && !BLOCKEND(LINE(rBlk, y)); y++)
         {
+            int nextR = 0, changeStart = 0;
             for (int j = start; j < BLOCK(SORTS, SSIZE); j++)
             {
                 sBlk = READ(j);
@@ -418,7 +418,7 @@ void task4()
                         start = changeStart ? start : j;
                         COPYLINE(LINE(wBlk, writeNum++), LINE(sBlk, k));
                         COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, y));
-                        if (writeNum == LINENUM / 2)
+                        if (writeNum == (LINENUM / 2) * 2)
                         {
                             SETNEXT(wBlk, BLOCK(OFFSET4, writeTimes + 1));
                             WRITE(wBlk, BLOCK(OFFSET4, writeTimes++));
@@ -444,4 +444,6 @@ void task4()
         SETNEXT(wBlk, BLOCK(OFFSET4, writeTimes + 1));
         WRITE(wBlk, BLOCK(OFFSET4, writeTimes++));
     }
+
+    freeBuffer(&buf);
 }
