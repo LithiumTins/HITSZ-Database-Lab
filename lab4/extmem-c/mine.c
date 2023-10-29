@@ -24,12 +24,15 @@
 
 // Where to write the result
 #define OFFSET1     100
-#define OFFSETR2     301
-#define OFFSETS2     317
-#define OFFSET3     401
+#define OFFSETR2    301
+#define OFFSETS2    317
+#define INDEXR      350
+#define INDEXS      355
+#define OFFSET3     120
 #define OFFSET4     402
 
 int IOTimes = 0;
+int rIndexSize = 0, sIndexSize = 0;
 
 // utils
 #define NEXT(p) ((char *)(p) + LINENUM * LINESIZE)
@@ -39,6 +42,7 @@ int IOTimes = 0;
 #define GROUP(p, off) ((p) + (off) * groupSize)
 #define BLOCK(p, off) ((p) + (off))
 #define BLOCKEND(p) (*(p) == '\0')
+#define COPYLINE(p, q) (memcpy((p), (q), LINESIZE))
 // extmem
 #define GETBLOCK(p) ((p) = GetNewBlockInBuffer(&buf))
 #define READ(addr) (ReadBlockFromDisk((addr), &buf, &IOTimes))
@@ -47,6 +51,7 @@ int IOTimes = 0;
 // function tools
 int cmp(const void *a, const void *b);
 void mergeSort(int start, int nBlocks, int tmpStart);
+void buildIndex(int start, int nBlocks, int indexStart, int *indexSize);
 
 // task 1
 // Relation Selection Algorithm based on linear search
@@ -56,10 +61,15 @@ void task1();
 // TPMMS(Two-Pass Multiway Merge Sort)
 void task2();
 
+// task 3
+// Relation Selection Algorithm based on index
+void task3();
+
 int main(int argc, char *argv[])
 {
     task1();
     task2();
+    task3();
 
     return 0;
 }
@@ -108,7 +118,7 @@ void mergeSort(int start, int nBlocks, int tmpStart)
                     else if (cmp(LINE(rBlk[j], idx[j]), LINE(rBlk[min], idx[min])) < 0)
                         min = j;
                 }
-                memcpy(LINE(wBlk, writeNum++), LINE(rBlk[min], idx[min]++), LINESIZE);
+                COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk[min], idx[min]++));
                 if (writeNum == LINENUM)
                 {
                     SETNEXT(wBlk, BLOCK(tmpStart, writeTimes + 1));
@@ -133,7 +143,10 @@ void mergeSort(int start, int nBlocks, int tmpStart)
                 }
             }
             if (writeNum)
+            {
+                SETNEXT(wBlk, BLOCK(tmpStart, writeTimes + 1));
                 WRITE(wBlk, BLOCK(tmpStart, writeTimes++));
+            }
             else
                 FREE(wBlk);
         }
@@ -155,10 +168,44 @@ void mergeSort(int start, int nBlocks, int tmpStart)
     freeBuffer(&buf);
 }
 
+void buildIndex(int start, int nBlocks, int indexStart, int *indexSize)
+{
+    Buffer buf;
+    unsigned char *wBlk, *rBlk;
+
+    InitBuffer(520, 64, &buf);
+
+    int writeNum = 0;
+    int writeTimes = 0;
+    GETBLOCK(wBlk);
+    for (int i = start; i < BLOCK(start, nBlocks); i++)
+    {
+        rBlk = READ(i);
+        COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, 0));
+        if (writeNum == LINENUM)
+        {
+            SETNEXT(wBlk, BLOCK(indexStart, writeTimes + 1));
+            WRITE(wBlk, BLOCK(indexStart, writeTimes++));
+            GETBLOCK(wBlk);
+            writeNum = 0;
+            (*indexSize)++;
+        }
+        FREE(rBlk);
+    }
+    if (writeNum)
+    {
+        SETNEXT(wBlk, BLOCK(indexStart, writeTimes + 1));
+        WRITE(wBlk, BLOCK(indexStart, writeTimes++));
+        (*indexSize)++;
+    }
+
+    freeBuffer(&buf);
+}
+
 void task1()
 {
     Buffer buf;
-    unsigned char *rblk, *wblk;
+    unsigned char *rBlk, *wBlk;
 
     IOTimes = 0;
 
@@ -169,36 +216,39 @@ void task1()
 
     for (int i = SBEGIN; i <= SEND; i++)
     {
-        rblk = READ(i);
+        rBlk = READ(i);
         for (int j = 0; j < LINENUM; j++)
         {
-            if (BLOCKEND(LINE(rblk, j)))
+            if (BLOCKEND(LINE(rBlk, j)))
                 break;
 
-            int C = ATTR(LINE(rblk, j), 0);
-            int D = ATTR(LINE(rblk, j), 1);
+            int C = ATTR(LINE(rBlk, j), 0);
+            int D = ATTR(LINE(rBlk, j), 1);
 
             if (C == 107)
             {
                 printf("(C=%d, D=%d)\n", C, D);
-                if (!wblk)
-                    GETBLOCK(wblk);
-                memcpy(LINE(wblk, writeNum++), LINE(rblk, j), LINESIZE);
+                if (!wBlk)
+                    GETBLOCK(wBlk);
+                COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, j));
             }
 
             if (writeNum == 7)
             {
-                sprintf(NEXT(wblk), "%d", BLOCK(OFFSET1, writeTimes + 1));
-                WRITE(wblk, BLOCK(OFFSET1, writeTimes++));
-                wblk = NULL;
+                SETNEXT(wBlk, BLOCK(OFFSET1, writeTimes + 1));
+                WRITE(wBlk, BLOCK(OFFSET1, writeTimes++));
+                wBlk = NULL;
                 writeNum = 0;
             }
         }
-        FREE(rblk);
+        FREE(rBlk);
     }
 
-    if (wblk)
-        WRITE(wblk, BLOCK(OFFSET1, writeTimes++));
+    if (wBlk)
+    {
+        SETNEXT(wBlk, BLOCK(OFFSET1, writeTimes + 1));
+        WRITE(wBlk, BLOCK(OFFSET1, writeTimes++));
+    }
 
     printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
@@ -240,4 +290,96 @@ void task2()
     mergeSort(OFFSETS2, SSIZE, SBUFFER);
 
     printf("IO times: %d\n\n\n", IOTimes);
+}
+
+void task3()
+{
+    buildIndex(OFFSETR2, RSIZE, INDEXR, &rIndexSize);
+    buildIndex(OFFSETS2, SSIZE, INDEXS, &sIndexSize);
+
+    Buffer buf;
+    unsigned char *rBlk, *wBlk = NULL;
+
+    InitBuffer(520, 64, &buf);
+
+    int searchStart = 0;
+    for (int i = INDEXS; i < BLOCK(INDEXS, sIndexSize); i++)
+    {
+        rBlk = READ(i);
+        int C;
+        for (int j = 0; j < LINENUM && !BLOCKEND(LINE(rBlk, j)); j++)
+        {
+            C = ATTR(LINE(rBlk, j), 0);
+            if (C > 107)
+            {
+                break;
+            }
+            else if (C == 107)
+            {
+                searchStart = (searchStart) ? searchStart : (OFFSETS2 + (i - INDEXS) * LINENUM + j);
+                break;
+            }
+            else
+            {
+                searchStart = OFFSETS2 + (i - INDEXS) * LINENUM + j;
+            }
+        }
+        FREE(rBlk);
+        if (C >= 107)
+            break;
+    }
+
+    IOTimes = 0;
+
+    int writeNum = 0;
+    int writeTimes = 0;
+    for (int i = searchStart; i < BLOCK(OFFSETS2, SSIZE); i++)
+    {
+        rBlk = READ(i);
+        for (int j = 0; j < LINENUM; j++)
+        {
+            if (BLOCKEND(LINE(rBlk, j)))
+                break;
+
+            int C = ATTR(LINE(rBlk, j), 0);
+            int D = ATTR(LINE(rBlk, j), 1);
+
+            if (C == 107)
+            {
+                printf("(C=%d, D=%d)\n", C, D);
+                if (!wBlk)
+                    GETBLOCK(wBlk);
+                COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, j));
+            }
+            else if (C > 107)
+            {
+                if (wBlk)
+                {
+                    SETNEXT(wBlk, BLOCK(OFFSET3, writeTimes + 1));
+                    WRITE(wBlk, BLOCK(OFFSET3, writeTimes++));
+                }
+                printf("IO times: %d\n\n\n", IOTimes);
+                freeBuffer(&buf);
+                return;
+            }
+
+            if (writeNum == 7)
+            {
+                SETNEXT(wBlk, BLOCK(OFFSET3, writeTimes + 1));
+                WRITE(wBlk, BLOCK(OFFSET3, writeTimes++));
+                wBlk = NULL;
+                writeNum = 0;
+            }
+        }
+        FREE(rBlk);
+    }
+
+    if (wBlk)
+    {
+        SETNEXT(wBlk, BLOCK(OFFSET3, writeTimes + 1));
+        WRITE(wBlk, BLOCK(OFFSET3, writeTimes++));
+    }
+
+    printf("IO times: %d\n\n\n", IOTimes);
+    freeBuffer(&buf);
 }
