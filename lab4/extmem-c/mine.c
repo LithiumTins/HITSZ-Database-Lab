@@ -400,6 +400,8 @@ void task4()
     int writeNum = 0;
     int writeTimes = 0;
     int start = SORTS;
+    int curS = start;
+    sBlk = READ(start);
     GETBLOCK(wBlk);
     for (int i = SORTR; i < BLOCK(SORTR, RSIZE); i++)
     {
@@ -409,13 +411,21 @@ void task4()
             int nextR = 0, changeStart = 0;
             for (int j = start; j < BLOCK(SORTS, SSIZE); j++)
             {
-                sBlk = READ(j);
+                if (j != curS)
+                {
+                    FREE(sBlk);
+                    sBlk = READ(j);
+                }
                 for (int k = 0; k < LINENUM && !BLOCKEND(LINE(sBlk, k)); k++)
                 {
                     int A = ATTR(LINE(rBlk, y), 0), C = ATTR(LINE(sBlk, k), 0);
                     if (A == C)
                     {
-                        start = changeStart ? start : j;
+                        if (!changeStart)
+                        {
+                            start = j;
+                            changeStart = 1;
+                        }
                         COPYLINE(LINE(wBlk, writeNum++), LINE(sBlk, k));
                         COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, y));
                         if (writeNum == (LINENUM / 2) * 2)
@@ -432,7 +442,6 @@ void task4()
                         break;
                     }
                 }
-                FREE(sBlk);
                 if (nextR)
                     break;
             }
@@ -442,8 +451,10 @@ void task4()
     if (writeNum)
     {
         SETNEXT(wBlk, BLOCK(OFFSET4, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET4, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET4, writeTimes));
     }
 
+    printf("Join times: %d\n", writeTimes * 3 + writeNum / 2);
+    printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
