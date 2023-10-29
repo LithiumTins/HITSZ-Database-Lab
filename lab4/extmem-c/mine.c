@@ -400,7 +400,7 @@ void task4()
     int writeNum = 0;
     int writeTimes = 0;
     int start = SORTS;
-    int curS = start;
+    int currentS = start;
     sBlk = READ(start);
     GETBLOCK(wBlk);
     for (int i = SORTR; i < BLOCK(SORTR, RSIZE); i++)
@@ -411,10 +411,11 @@ void task4()
             int nextR = 0, changeStart = 0;
             for (int j = start; j < BLOCK(SORTS, SSIZE); j++)
             {
-                if (j != curS)
+                if (j != currentS)
                 {
                     FREE(sBlk);
                     sBlk = READ(j);
+                    currentS = j;
                 }
                 for (int k = 0; k < LINENUM && !BLOCKEND(LINE(sBlk, k)); k++)
                 {
