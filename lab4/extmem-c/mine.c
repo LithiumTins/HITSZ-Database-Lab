@@ -24,12 +24,12 @@
 
 // Where to write the result
 #define OFFSET1     100
-#define OFFSETR2    301
-#define OFFSETS2    317
+#define SORTR     301
+#define SORTS     317
 #define INDEXR      350
 #define INDEXS      355
 #define OFFSET3     120
-#define OFFSET4     402
+#define OFFSET4     401
 
 int IOTimes = 0;
 int rIndexSize = 0, sIndexSize = 0;
@@ -65,11 +65,16 @@ void task2();
 // Relation Selection Algorithm based on index
 void task3();
 
+// task 4
+// Join Algorithm based on sorting
+void task4();
+
 int main(int argc, char *argv[])
 {
     task1();
     task2();
     task3();
+    task4();
 
     return 0;
 }
@@ -279,23 +284,23 @@ void task2()
         }
         qsort(blk, nTuples, LINESIZE, cmp);
 
-        SETNEXT(blk, BLOCK(OFFSETR2, writeTimes + 1));
-        WRITE(blk, BLOCK(OFFSETR2, writeTimes++));
+        SETNEXT(blk, BLOCK(SORTR, writeTimes + 1));
+        WRITE(blk, BLOCK(SORTR, writeTimes++));
     }
 
     freeBuffer(&buf);
 
     // second pass, merge sort
-    mergeSort(OFFSETR2, RSIZE, RBUFFER);
-    mergeSort(OFFSETS2, SSIZE, SBUFFER);
+    mergeSort(SORTR, RSIZE, RBUFFER);
+    mergeSort(SORTS, SSIZE, SBUFFER);
 
     printf("IO times: %d\n\n\n", IOTimes);
 }
 
 void task3()
 {
-    buildIndex(OFFSETR2, RSIZE, INDEXR, &rIndexSize);
-    buildIndex(OFFSETS2, SSIZE, INDEXS, &sIndexSize);
+    buildIndex(SORTR, RSIZE, INDEXR, &rIndexSize);
+    buildIndex(SORTS, SSIZE, INDEXS, &sIndexSize);
 
     Buffer buf;
     unsigned char *rBlk, *wBlk = NULL;
@@ -316,12 +321,12 @@ void task3()
             }
             else if (C == 107)
             {
-                searchStart = (searchStart) ? searchStart : (OFFSETS2 + (i - INDEXS) * LINENUM + j);
+                searchStart = (searchStart) ? searchStart : (SORTS + (i - INDEXS) * LINENUM + j);
                 break;
             }
             else
             {
-                searchStart = OFFSETS2 + (i - INDEXS) * LINENUM + j;
+                searchStart = SORTS + (i - INDEXS) * LINENUM + j;
             }
         }
         FREE(rBlk);
@@ -333,7 +338,7 @@ void task3()
 
     int writeNum = 0;
     int writeTimes = 0;
-    for (int i = searchStart; i < BLOCK(OFFSETS2, SSIZE); i++)
+    for (int i = searchStart; i < BLOCK(SORTS, SSIZE); i++)
     {
         rBlk = READ(i);
         for (int j = 0; j < LINENUM; j++)
@@ -382,4 +387,61 @@ void task3()
 
     printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
+}
+
+void task4()
+{
+    // R and S have been sorted in task2
+    Buffer buf;
+    unsigned char *rBlk, *sBlk, *wBlk = NULL;
+
+    InitBuffer(520, 64, &buf);
+
+    int writeNum = 0;
+    int writeTimes = 0;
+    int start = SORTS;
+    GETBLOCK(wBlk);
+    for (int i = SORTR; i < BLOCK(SORTR, RSIZE); i++)
+    {
+        rBlk = READ(i);
+        int nextR = 0, changeStart = 0;
+        for (int y = 0; y < LINENUM && !BLOCKEND(LINE(rBlk, y)); y++)
+        {
+            for (int j = start; j < BLOCK(SORTS, SSIZE); j++)
+            {
+                sBlk = READ(j);
+                for (int k = 0; k < LINENUM && !BLOCKEND(LINE(sBlk, k)); k++)
+                {
+                    int A = ATTR(LINE(rBlk, y), 0), C = ATTR(LINE(sBlk, k), 0);
+                    if (A == C)
+                    {
+                        start = changeStart ? start : j;
+                        COPYLINE(LINE(wBlk, writeNum++), LINE(sBlk, k));
+                        COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, y));
+                        if (writeNum == LINENUM / 2)
+                        {
+                            SETNEXT(wBlk, BLOCK(OFFSET4, writeTimes + 1));
+                            WRITE(wBlk, BLOCK(OFFSET4, writeTimes++));
+                            GETBLOCK(wBlk);
+                            writeNum = 0;
+                        }
+                    }
+                    else if (A < C)
+                    {
+                        nextR = 1;
+                        break;
+                    }
+                }
+                FREE(sBlk);
+                if (nextR)
+                    break;
+            }
+        }
+        FREE(rBlk);
+    }
+    if (writeNum)
+    {
+        SETNEXT(wBlk, BLOCK(OFFSET4, writeTimes + 1));
+        WRITE(wBlk, BLOCK(OFFSET4, writeTimes++));
+    }
 }
