@@ -80,6 +80,10 @@ void task51();
 // union based on sort
 void task52();
 
+// task 53
+// difference based on sort
+void task53();
+
 int main(int argc, char *argv[])
 {
     task1();
@@ -88,6 +92,7 @@ int main(int argc, char *argv[])
     task4();
     task51();
     task52();
+    task53();
 
     return 0;
 }
@@ -665,4 +670,101 @@ void task52()
 
     printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf); 
+}
+
+void task53()
+{
+    // R and S have been sorted in task2
+    Buffer buf;
+    unsigned char *rBlk = NULL, *sBlk = NULL, *wBlk = NULL;
+
+    InitBuffer(520, 64, &buf);
+
+    IOTimes = 0;
+
+    int writeNum = 0;
+    int writeTimes = 0;
+    int i, j, r, s;
+    GETBLOCK(wBlk);
+    for (i = 0, j = 0, r = 0, s = 0; i < RSIZE && j < SSIZE; )
+    {
+        if (!rBlk)
+        {
+            rBlk = READ(BLOCK(SORTR, i));
+            r = 0;
+        }
+        if (!sBlk)
+        {
+            sBlk = READ(BLOCK(SORTS, j));
+            s = 0;
+        }
+        while (r != LINENUM && !BLOCKEND(LINE(rBlk, r)) && s != LINENUM && !BLOCKEND(LINE(sBlk, s)))
+        {
+            int compare = cmp(LINE(rBlk, r), LINE(sBlk, s));
+            if (compare < 0)
+            {
+                COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, r));
+                if (writeNum == LINENUM)
+                {
+                    SETNEXT(wBlk, BLOCK(OFFSET53, writeTimes + 1));
+                    WRITE(wBlk, BLOCK(OFFSET53, writeTimes++));
+                    GETBLOCK(wBlk);
+                    writeNum = 0;
+                }
+                r++;
+            }
+            else if (compare == 0)
+            {
+                r++;
+                s++;
+            }
+            else
+            {
+                s++;
+            }
+        }
+        if (r == LINENUM || BLOCKEND(LINE(rBlk, r)))
+        {
+            FREE(rBlk);
+            rBlk = NULL;
+            i++;
+        }
+        if (s == LINENUM || BLOCKEND(LINE(sBlk, s)))
+        {
+            FREE(sBlk);
+            sBlk = NULL;
+            j++;
+        }
+    }
+    while (i < RSIZE)
+    {
+        if (!rBlk)
+        {
+            rBlk = READ(BLOCK(SORTR, i));
+            r = 0;
+        }
+        while (r != LINENUM && !BLOCKEND(LINE(rBlk, r)))
+        {
+            COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, r));
+            r++;
+            if (writeNum == LINENUM)
+            {
+                SETNEXT(wBlk, BLOCK(OFFSET53, writeTimes + 1));
+                WRITE(wBlk, BLOCK(OFFSET53, writeTimes++));
+                GETBLOCK(wBlk);
+                writeNum = 0;
+            }
+        }
+        FREE(rBlk);
+        rBlk = NULL;
+        i++;
+    }
+    if (writeNum)
+    {
+        SETNEXT(wBlk, BLOCK(OFFSET53, writeTimes + 1));
+        WRITE(wBlk, BLOCK(OFFSET53, writeTimes++));
+    }
+
+    printf("IO times: %d\n\n\n", IOTimes);
+    freeBuffer(&buf);
 }
