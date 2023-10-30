@@ -12,8 +12,8 @@
 #define BLOCK_UNAVAILABLE 1
 
 // Info prefix for printing
-#define READ_PREFIX "Read Block"
-#define WRITE_PREFIX "Write Block"
+#define READ_PREFIX "Read"
+#define WRITE_PREFIX "Write"
 
 typedef struct tagBuffer {
     unsigned long numIO; /* Number of IO's*/

@@ -227,6 +227,10 @@ void buildIndex(int start, int nBlocks, int indexStart, int *indexSize)
 
 void task1()
 {
+    printf("---------------------------------------------\n");
+    printf("任务1：基于线性搜索的关系选择算法（S.C = 107）\n");
+    printf("---------------------------------------------\n");
+
     Buffer buf;
     unsigned char *rBlk, *wBlk;
 
@@ -250,7 +254,7 @@ void task1()
 
             if (C == 107)
             {
-                printf("(C=%d, D=%d)\n", C, D);
+                printf("(C = %d, D = %d)\n", C, D);
                 if (!wBlk)
                     GETBLOCK(wBlk);
                 COPYLINE(LINE(wBlk, writeNum++), LINE(rBlk, j));
@@ -270,15 +274,20 @@ void task1()
     if (wBlk)
     {
         SETNEXT(wBlk, BLOCK(OFFSET1, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET1, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET1, writeTimes));
     }
 
-    printf("IO times: %d\n\n\n", IOTimes);
+    printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+    printf("IO次数：%d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
 
 void task2()
 {
+    printf("-----------------------------\n");
+    printf("任务2：两阶段多路归并排序算法\n");
+    printf("-----------------------------\n");
+
     Buffer buf;
     int writeTimes = 0;
 
@@ -312,18 +321,26 @@ void task2()
     mergeSort(SORTR, RSIZE, RBUFFER);
     mergeSort(SORTS, SSIZE, SBUFFER);
 
-    printf("IO times: %d\n\n\n", IOTimes);
+    printf("IO次数：%d\n\n\n", IOTimes);
 }
 
 void task3()
 {
+    printf("-----------------------------------------\n");
+    printf("任务3：基于索引的关系选择算法（S.C = 107）\n");
+    printf("-----------------------------------------\n");
+
     buildIndex(SORTR, RSIZE, INDEXR, &rIndexSize);
     buildIndex(SORTS, SSIZE, INDEXS, &sIndexSize);
+
+    printf("索引建立完成！\n");
 
     Buffer buf;
     unsigned char *rBlk, *wBlk = NULL;
 
     InitBuffer(520, 64, &buf);
+
+    IOTimes = 0;
 
     int searchStart = 0;
     for (int i = INDEXS; i < BLOCK(INDEXS, sIndexSize); i++)
@@ -352,7 +369,7 @@ void task3()
             break;
     }
 
-    IOTimes = 0;
+    printf("索引查找完成！\n");
 
     int writeNum = 0;
     int writeTimes = 0;
@@ -379,9 +396,10 @@ void task3()
                 if (wBlk)
                 {
                     SETNEXT(wBlk, BLOCK(OFFSET3, writeTimes + 1));
-                    WRITE(wBlk, BLOCK(OFFSET3, writeTimes++));
+                    WRITE(wBlk, BLOCK(OFFSET3, writeTimes));
                 }
-                printf("IO times: %d\n\n\n", IOTimes);
+                printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+                printf("IO次数: %d\n\n\n", IOTimes);
                 freeBuffer(&buf);
                 return;
             }
@@ -400,15 +418,18 @@ void task3()
     if (wBlk)
     {
         SETNEXT(wBlk, BLOCK(OFFSET3, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET3, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET3, writeTimes));
     }
-
-    printf("IO times: %d\n\n\n", IOTimes);
+    printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+    printf("IO次数: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
 
 void task4()
 {
+    printf("-----------------------------\n");
+    printf("任务4：基于排序的连接操作算法\n");
+    printf("-----------------------------\n");
     // R and S have been sorted in task2
     Buffer buf;
     unsigned char *rBlk, *sBlk, *wBlk = NULL;
@@ -475,13 +496,17 @@ void task4()
         WRITE(wBlk, BLOCK(OFFSET4, writeTimes));
     }
 
-    printf("Join times: %d\n", writeTimes * 3 + writeNum / 2);
-    printf("IO times: %d\n\n\n", IOTimes);
+    printf("连接次数：%d\n", writeTimes * 3 + writeNum / 2);
+    printf("IO次数：%d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
 
 void task51()
 {
+    printf("-------------------------------\n");
+    printf("任务5.1：基于排序的集合的交算法\n");
+    printf("-------------------------------\n");
+
     // R and S have been sorted in task2
     Buffer buf;
     unsigned char *rBlk = NULL, *sBlk = NULL, *wBlk = NULL;
@@ -511,6 +536,7 @@ void task51()
             int compare = cmp(LINE(rBlk, r), LINE(sBlk, s));
             if (compare == 0)
             {
+                printf("(C = %d, D = %d)\n", ATTR(LINE(sBlk, s), 0), ATTR(LINE(sBlk, s), 1));
                 COPYLINE(LINE(wBlk, writeNum++), LINE(sBlk, s));
                 if (writeNum == LINENUM)
                 {
@@ -547,15 +573,21 @@ void task51()
     if (writeNum)
     {
         SETNEXT(wBlk, BLOCK(OFFSET51, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET51, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET51, writeTimes));
     }
 
-    printf("IO times: %d\n\n\n", IOTimes);
+
+    printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+    printf("IO次数: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
 
 void task52()
 {
+    printf("-------------------------------\n");
+    printf("任务5.2：基于排序的集合的并算法\n");
+    printf("-------------------------------\n");
+
     // R and S have been sorted in task2
     Buffer buf;
     unsigned char *rBlk = NULL, *sBlk = NULL, *wBlk = NULL;
@@ -665,15 +697,20 @@ void task52()
     if (writeNum)
     {
         SETNEXT(wBlk, BLOCK(OFFSET52, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET52, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET52, writeTimes));
     }
 
-    printf("IO times: %d\n\n\n", IOTimes);
-    freeBuffer(&buf); 
+    printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+    printf("IO次数: %d\n\n\n", IOTimes);
+    freeBuffer(&buf);
 }
 
 void task53()
 {
+    printf("---------------------------------------\n");
+    printf("任务5.2：基于排序的集合的差算法（R - S）\n");
+    printf("---------------------------------------\n");
+
     // R and S have been sorted in task2
     Buffer buf;
     unsigned char *rBlk = NULL, *sBlk = NULL, *wBlk = NULL;
@@ -762,9 +799,10 @@ void task53()
     if (writeNum)
     {
         SETNEXT(wBlk, BLOCK(OFFSET53, writeTimes + 1));
-        WRITE(wBlk, BLOCK(OFFSET53, writeTimes++));
+        WRITE(wBlk, BLOCK(OFFSET53, writeTimes));
     }
 
-    printf("IO times: %d\n\n\n", IOTimes);
+    printf("\n满足条件的元组有 %d 个\n", writeTimes * LINENUM + writeNum);
+    printf("IO次数: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
