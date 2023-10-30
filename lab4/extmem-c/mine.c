@@ -30,6 +30,9 @@
 #define INDEXS      355
 #define OFFSET3     120
 #define OFFSET4     401
+#define OFFSET51    501
+#define OFFSET52    601
+#define OFFSET53    701
 
 int IOTimes = 0;
 int rIndexSize = 0, sIndexSize = 0;
@@ -69,12 +72,17 @@ void task3();
 // Join Algorithm based on sorting
 void task4();
 
+// task 51
+// intersection based on sort
+void task51();
+
 int main(int argc, char *argv[])
 {
     task1();
     task2();
     task3();
     task4();
+    task51();
 
     return 0;
 }
@@ -456,6 +464,79 @@ void task4()
     }
 
     printf("Join times: %d\n", writeTimes * 3 + writeNum / 2);
+    printf("IO times: %d\n\n\n", IOTimes);
+    freeBuffer(&buf);
+}
+
+void task51()
+{
+    // R and S have been sorted in task2
+    Buffer buf;
+    unsigned char *rBlk = NULL, *sBlk = NULL, *wBlk = NULL;
+
+    InitBuffer(520, 64, &buf);
+
+    int writeNum = 0;
+    int writeTimes = 0;
+    int i, j, r, s;
+    GETBLOCK(wBlk);
+    for (i = 0, j = 0, r = 0, s = 0; i < RSIZE && j < SSIZE; )
+    {
+        if (!rBlk)
+        {
+            rBlk = READ(BLOCK(SORTR, i));
+            r = 0;
+        }
+        if (!sBlk)
+        {
+            sBlk = READ(BLOCK(SORTS, j));
+            s = 0;
+        }
+        while (r != LINENUM && !BLOCKEND(LINE(rBlk, r)) && s != LINENUM && !BLOCKEND(LINE(sBlk, s)))
+        {
+            int A = ATTR(LINE(rBlk, r), 0), B = ATTR(LINE(rBlk, r), 1);
+            int C = ATTR(LINE(sBlk, s), 0), D = ATTR(LINE(sBlk, s), 1);
+            if (A == C && B == D)
+            {
+                COPYLINE(LINE(wBlk, writeNum++), LINE(sBlk, s));
+                if (writeNum == LINENUM)
+                {
+                    SETNEXT(wBlk, BLOCK(OFFSET51, writeTimes + 1));
+                    WRITE(wBlk, BLOCK(OFFSET51, writeTimes++));
+                    GETBLOCK(wBlk);
+                    writeNum = 0;
+                }
+                s++;
+                r++;
+            }
+            else if (A < C || (A == C && B < D))
+            {
+                r++;
+            }
+            else
+            {
+                s++;
+            }
+        }
+        if (r == LINENUM || BLOCKEND(LINE(rBlk, r)))
+        {
+            FREE(rBlk);
+            rBlk = NULL;
+            i++;
+        }
+        if (s == LINENUM || BLOCKEND(LINE(sBlk, s)))
+        {
+            FREE(sBlk);
+            sBlk = NULL;
+            j++;
+        }
+    }
+    if (writeNum)
+    {
+        SETNEXT(wBlk, BLOCK(OFFSET51, writeTimes + 1));
+        WRITE(wBlk, BLOCK(OFFSET51, writeTimes++));
+    }
+
     printf("IO times: %d\n\n\n", IOTimes);
     freeBuffer(&buf);
 }
