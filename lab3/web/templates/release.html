@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闲鱼发布</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+            position: relative;
+        }
+
+        section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 58%;
+            right: 20px;
+            transform: translateY(-50%);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>发布二手物品</h1>
+        <div class="user-info">
+            <span style="font-weight: bold;">用户&nbsp;{{ username }}</span>
+            <a href="main" style="color: #fff; margin-left: 10px;">回到主页</a>
+        </div>
+    </header>
+
+    <section>
+        <form method="post" enctype="multipart/form-data">
+            <label for="itemName" style="font-size: medium; font-weight: bold;">物品名称：</label>
+            <input type="text" id="itemName" name="itemName" maxlength="20" required>
+
+            <label for="itemPrice" style="font-size: medium; font-weight: bold;">物品价格：</label>
+            <input type="number" id="itemPrice" name="itemPrice" step="0.01" min="0.01" max="999999.99" required>
+
+            <label for="itemOld" style="font-size: medium; font-weight: bold;">新旧程度：</label>
+            <select id="itemOld" name="itemOld" required>
+                <option value="全新">全新</option>
+                <option value="几乎全新">几乎全新</option>
+                <option value="良好">良好</option>
+                <option value="较多磨损">较多磨损</option>
+                <option value="伊拉克成色">伊拉克成色</option>
+            </select>
+
+            <label for="itemType" style="font-size: medium; font-weight: bold;">物品类别：</label>
+            <select id="itemType" name="itemType" required>
+                <option value="电子产品">电子产品</option>
+                <option value="书籍">书籍</option>
+            </select>
+
+            <label for="itemPosition" style="font-size: medium; font-weight: bold;">发布位置：</label>
+            <input type="text" id="itemPosition" name="itemPosition" maxlength="60" required>
+
+            <label for="itemImage" style="font-size: medium; font-weight: bold;">物品图片:</label>
+            <img id="preview" src="#" alt="your image" style="display: none;" width="160"/>
+            <input type="file" id="itemImage" name="itemImage" accept="image/*" onchange="previewImage(event)" required>
+
+            <button type="submit">发布物品</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>我是学生，送我！</p>
+    </footer>
+</body>
+
+<script>
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function(){
+            var output = document.getElementById('preview');
+            output.src = reader.result;
+            output.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闲鱼管理员</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+            position: relative
+        }
+
+        .user-info {
+            position: absolute;
+            top: 58%;
+            right: 20px;
+            transform: translateY(-50%);
+            color: #fff;
+        }
+
+        .functional {
+            position: absolute;
+            top: 58%;
+            left: 20px;
+            transform: translateY(-50%);
+            color: #fff;
+        }
+
+        section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 40px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        .item img {
+            margin-left: 40px;
+            max-width: 200px;
+            max-height: 200px;
+            margin-right: 60px;
+            object-fit: contain;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>闲鱼（学生版）管理模式</h1>
+        <div class="user-info">
+            <span style="font-weight: bold;">管理员：{{ user.name }}</span>
+            <a href="adminmain" style="color: #fff; margin-left: 10px;">回到主页</a>
+        </div>
+    </header>
+
+    <section>
+        <h2 style="padding-bottom: 10px; border-bottom: 1px solid#ddd;">待处理投诉</h2>
+        {% for complaint in complaint_list %}
+        <div class="item">
+            <div style="display: flex;">
+                <img src="{{ complaint.orders.goods.image }}" alt="{{ complaint.orders.goods.name }}">
+                <div>
+                    <h3>{{ complaint.orders.goods.name }}</h3>
+                    <p>投诉类型：{{ complaint.type }}</p>
+                    <p>投诉原因：{{ complaint.content }}</p>
+                </div>
+            </div>
+            <div style="display: flex;">
+                <a href="refund/{{ complaint.id }}" style="color: #000; margin-right: 10px; margin-right: 40px;">退款</a>
+                <a href="norefund/{{ complaint.id }}" style="color: #000; margin-right: 10px; margin-right: 40px;">拒绝</a>
+            </div>
+        </div>
+        {% endfor %}
+        {% if complaint_list|length == 0 %}
+        <h2 style="text-align: center; margin-top: 60px;">暂时没有投诉需要处理</h2>
+        {% endif %}
+    </section>
+
+    <footer>
+        <p>我是学生，送我！</p>
+    </footer>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <script>
+                {% for message in messages %}
+                    alert("{{ message }}");
+                {% endfor %}
+            </script>
+        {% endif %}
+    {% endwith %}
+
+</body>
+
+</html>

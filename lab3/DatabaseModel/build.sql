@@ -1,41 +1,8 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     2023/10/31 13:24:17                          */
+/* Created on:     2023/10/31 20:13:43                          */
 /*==============================================================*/
 
-
-alter table cartItem 
-   drop foreign key FK_CARTITEM_CARTITEM__GOODS;
-
-alter table cartItem 
-   drop foreign key FK_CARTITEM_USER_CART_USER;
-
-alter table complaint 
-   drop foreign key FK_COMPLAIN_ADMIN_COM_ADMIN;
-
-alter table complaint 
-   drop foreign key FK_COMPLAIN_COMPLAINT_COMPLAIN;
-
-alter table complaint 
-   drop foreign key FK_COMPLAIN_COMPLAINT_ORDER;
-
-alter table complaint 
-   drop foreign key FK_COMPLAIN_USER_COMP_USER;
-
-alter table goods 
-   drop foreign key FK_GOODS_ADMIN_GOO_ADMIN;
-
-alter table goods 
-   drop foreign key FK_GOODS_GOODS_GOO_GOODSTYP;
-
-alter table goods 
-   drop foreign key FK_GOODS_USER_GOOD_USER;
-
-alter table "order" 
-   drop foreign key FK_ORDER_ORDER_GOO_GOODS;
-
-alter table "order" 
-   drop foreign key FK_ORDER_USER_ORDE_USER;
 
 /*==============================================================*/
 /* Table: admin                                                 */
@@ -114,9 +81,9 @@ create table goodsType
 );
 
 /*==============================================================*/
-/* Table: "order"                                               */
+/* Table: orders                                                */
 /*==============================================================*/
-create table "order"
+create table orders
 (
    order_id             int not null auto_increment  comment '',
    user_id              int not null  comment '',
@@ -150,8 +117,8 @@ alter table complaint add constraint FK_COMPLAIN_ADMIN_COM_ADMIN foreign key (ad
 alter table complaint add constraint FK_COMPLAIN_COMPLAINT_COMPLAIN foreign key (complaintType_id)
       references complaintType (complaintType_id) on delete restrict on update restrict;
 
-alter table complaint add constraint FK_COMPLAIN_COMPLAINT_ORDER foreign key (order_id)
-      references "order" (order_id) on delete restrict on update restrict;
+alter table complaint add constraint FK_COMPLAIN_COMPLAINT_ORDERS foreign key (order_id)
+      references orders (order_id) on delete restrict on update restrict;
 
 alter table complaint add constraint FK_COMPLAIN_USER_COMP_USER foreign key (user_id)
       references user (user_id) on delete restrict on update restrict;
@@ -165,9 +132,9 @@ alter table goods add constraint FK_GOODS_GOODS_GOO_GOODSTYP foreign key (goodsT
 alter table goods add constraint FK_GOODS_USER_GOOD_USER foreign key (user_id)
       references user (user_id) on delete restrict on update restrict;
 
-alter table "order" add constraint FK_ORDER_ORDER_GOO_GOODS foreign key (goods_id)
+alter table orders add constraint FK_ORDERS_ORDER_GOO_GOODS foreign key (goods_id)
       references goods (goods_id) on delete restrict on update restrict;
 
-alter table "order" add constraint FK_ORDER_USER_ORDE_USER foreign key (user_id)
+alter table orders add constraint FK_ORDERS_USER_ORDE_USER foreign key (user_id)
       references user (user_id) on delete restrict on update restrict;
 

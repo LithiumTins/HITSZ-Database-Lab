@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>闲鱼学生版</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+        }
+
+        section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        .item img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 20px;
+        }
+
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 1em 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>闲鱼（学生版）</h1>
+    </header>
+
+    <div style="text-align: center; padding-top: 80px; padding-bottom: 30px;">
+        <img src="{{ url_for('static', filename='images/student.jpg') }}" alt="我是学生" width="200">
+    </div>
+
+    <div style="text-align: center;">
+        <h2>欢迎来到闲鱼校园版！</h2>
+        <h2>我们致力于提供愉快的二手交易体验！</h2>
+        <button onclick="window.location.href='login'" type="button" id="add" style="padding-left: 20px; padding-right: 20px; letter-spacing: 2px; margin-top: 20px; font-size: medium;">我是普通用户</button>
+        <br>
+        <button onclick="window.location.href='adminlogin'" type="button" id="add" style="margin-top: 20px; padding-left: 20px; padding-right: 20px; letter-spacing: 5px; font-size: medium;">我是管理员</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 校园二手物品交易平台</p>
+    </footer>
+
+</body>
+</html>
