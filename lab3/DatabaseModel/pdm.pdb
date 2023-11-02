@@ -4779,7 +4779,7 @@ DESTINATION 0 新宋体,8,N</a:FontList>
 <o:ReferenceSymbol Id="o19">
 <a:ModificationDate>1698928042</a:ModificationDate>
 <a:CenterTextOffset>(-17100, 1056)</a:CenterTextOffset>
-<a:Rect>((6594,-14802), (36445,14068))</a:Rect>
+<a:Rect>((6594,-14802), (36445,14065))</a:Rect>
 <a:ListOfPoints>((6994,12121),(35820,12121),(35820,-14402))</a:ListOfPoints>
 <a:CornerStyle>2</a:CornerStyle>
 <a:ArrowStyle>1</a:ArrowStyle>
@@ -4892,7 +4892,7 @@ DESTINATION 0 新宋体,8,N</a:FontList>
 <o:ReferenceSymbol Id="o31">
 <a:ModificationDate>1698928036</a:ModificationDate>
 <a:CenterTextOffset>(0, 1246)</a:CenterTextOffset>
-<a:Rect>((-13627,13716), (4960,16474))</a:Rect>
+<a:Rect>((-13627,13716), (4960,16471))</a:Rect>
 <a:ListOfPoints>((4560,14341),(-13227,14341))</a:ListOfPoints>
 <a:CornerStyle>2</a:CornerStyle>
 <a:ArrowStyle>1</a:ArrowStyle>
